@@ -1,0 +1,213 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Reference table the scoring engine uses to translate an abstract value (e.g. 'Collaboration') into a measurable competency, its observable behavioral indicators, and which evidence-collection methods are appropriate to assess it. The 'evidence_sources' field in each entry references the method ids defined in evidence_validity_weights.json, so the two files work as one linked system.",
+  "methodology_note": "The core assumption here is that values cannot be measured directly — only behavior can. Most competencies below are taken directly from Spencer & Spencer's generic competency dictionary (1993), the most widely cited job-analysis-based source for translating qualities into observable behavior. Where a commonly-stated organizational value (e.g. Trust, Inclusion) has no discrete equivalent in that dictionary, the entry is marked 'adapted' and built instead from the integrity-testing and DEI-assessment literature. Nothing here is invented without a stated basis.",
+  "sources": {
+    "spencer_spencer_1993": "Spencer, L. M., & Spencer, S. M. (1993). Competence at Work: Models for Superior Performance. Wiley.",
+    "adapted_general": "No discrete entry exists in a standard competency dictionary for this value; the competency and behaviors below are constructed from adjacent, well-established research (e.g. integrity testing, DEI assessment practice) rather than drawn from a single named source."
+  },
+  "values": [
+    {
+      "value": "Collaboration",
+      "aliases": ["Teamwork", "Working together"],
+      "competency": "Teamwork and cooperation",
+      "competency_cluster": "Managerial",
+      "definition": "A genuine intention to work cooperatively with others, to be part of a team, rather than working separately or competitively.",
+      "behavioral_indicators": [
+        "Shares information and credit with the team rather than hoarding it",
+        "Seeks input from others before deciding",
+        "Resolves disagreement constructively rather than avoiding or escalating it",
+        "Adjusts own approach to support a shared team goal"
+      ],
+      "evidence_sources": ["structured_interview", "assessment_center", "reference_check"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Trust",
+      "aliases": ["Integrity", "Honesty"],
+      "competency": "Integrity and reliability",
+      "competency_cluster": "Adapted",
+      "definition": "Consistently doing what one says, and being transparent about risk, error, or uncertainty rather than concealing it.",
+      "behavioral_indicators": [
+        "Follows through on commitments without being chased",
+        "Discloses mistakes or risks proactively rather than waiting to be asked",
+        "Behaves consistently whether or not a manager is watching",
+        "Gives credit accurately rather than overstating own contribution"
+      ],
+      "evidence_sources": ["integrity_test", "structured_interview", "reference_check"],
+      "source": "adapted_general"
+    },
+    {
+      "value": "Transparency",
+      "aliases": ["Openness"],
+      "competency": "Integrity and reliability",
+      "competency_cluster": "Adapted",
+      "definition": "Same underlying construct as Trust; many organizations use this word specifically for the disclosure half of integrity.",
+      "behavioral_indicators": [
+        "Surfaces a problem before being asked",
+        "Explains the reasoning behind a decision, not just the decision itself",
+        "Shares bad news at the same speed as good news"
+      ],
+      "evidence_sources": ["integrity_test", "structured_interview", "reference_check"],
+      "source": "adapted_general"
+    },
+    {
+      "value": "Empathy",
+      "aliases": ["Compassion", "Care"],
+      "competency": "Interpersonal understanding",
+      "competency_cluster": "Helping and human service",
+      "definition": "Accurately hearing and understanding the unspoken or partly-expressed thoughts, feelings, and concerns of others.",
+      "behavioral_indicators": [
+        "Listens fully before responding",
+        "Names how a decision might land for someone else before making it",
+        "Adapts communication style to the audience",
+        "Asks about impact on people, not just the outcome, when something goes wrong"
+      ],
+      "evidence_sources": ["structured_interview", "assessment_center", "reference_check"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Innovation",
+      "aliases": ["Creativity"],
+      "competency": "Conceptual thinking",
+      "competency_cluster": "Cognitive",
+      "definition": "Recognizing patterns or connections between situations that are not obviously related, and using a creative or conceptual approach to identify key issues.",
+      "behavioral_indicators": [
+        "Proposes a genuinely new approach rather than the default one",
+        "Connects ideas from an unrelated area to solve the problem at hand",
+        "Iterates on a first answer rather than defending it",
+        "Explains the reasoning behind a novel idea, not just the idea itself"
+      ],
+      "evidence_sources": ["work_sample", "structured_interview", "cognitive_ability_test"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Ownership",
+      "aliases": ["Accountability", "Bias for action"],
+      "competency": "Initiative",
+      "competency_cluster": "Achievement and action",
+      "definition": "A preference for taking action, going beyond what is strictly required, and persisting despite obstacles.",
+      "behavioral_indicators": [
+        "Acts on a problem before being asked to",
+        "Persists through a setback rather than escalating immediately",
+        "Takes responsibility for an outcome even when it could be blamed elsewhere",
+        "Anticipates a future problem and starts addressing it early"
+      ],
+      "evidence_sources": ["structured_interview", "biodata", "reference_check"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Customer focus",
+      "aliases": ["Customer obsession", "Client focus"],
+      "competency": "Customer service orientation",
+      "competency_cluster": "Helping and human service",
+      "definition": "A desire to help or serve others, focused on their actual underlying need rather than the surface request.",
+      "behavioral_indicators": [
+        "Asks what the underlying need is, not just the stated request",
+        "Follows up after a resolution to confirm it actually worked",
+        "Goes beyond the standard response when the situation calls for it",
+        "Balances the customer's need with what is actually feasible"
+      ],
+      "evidence_sources": ["work_sample", "structured_interview", "reference_check"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Excellence",
+      "aliases": ["Quality", "Craftsmanship"],
+      "competency": "Concern for order, quality and accuracy",
+      "competency_cluster": "Achievement and action",
+      "definition": "An underlying drive to reduce uncertainty around the quality and accuracy of work, and to maintain clear systems and standards.",
+      "behavioral_indicators": [
+        "Double-checks own work before it goes out",
+        "Builds a system or checklist rather than relying on memory",
+        "Flags a quality issue even when no one else noticed it",
+        "Sets a clear standard upfront rather than discovering one after the fact"
+      ],
+      "evidence_sources": ["work_sample", "job_knowledge_test", "structured_interview"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Agility",
+      "aliases": ["Adaptability", "Flexibility"],
+      "competency": "Flexibility",
+      "competency_cluster": "Personal effectiveness",
+      "definition": "Ability to adapt to and work effectively in a variety of situations, with different people, and in the face of changing priorities.",
+      "behavioral_indicators": [
+        "Changes approach when new information arrives, without rigidity",
+        "Stays effective when a plan changes at short notice",
+        "Works through ambiguity rather than waiting for full clarity",
+        "Adjusts own style to fit different stakeholders"
+      ],
+      "evidence_sources": ["structured_interview", "assessment_center", "personality_test"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Respect",
+      "aliases": ["Inclusion", "Diversity"],
+      "competency": "Valuing different perspectives",
+      "competency_cluster": "Adapted",
+      "definition": "Actively seeking out, hearing, and incorporating perspectives different from one's own, including from people with less power in a given interaction.",
+      "behavioral_indicators": [
+        "Invites a dissenting view before finalizing a decision",
+        "Adjusts behavior after learning of a difference in background or perspective",
+        "Names an exclusionary moment in the room rather than letting it pass",
+        "Credits a quieter contributor's idea explicitly"
+      ],
+      "evidence_sources": ["structured_interview", "reference_check"],
+      "source": "adapted_general"
+    },
+    {
+      "value": "Courage",
+      "aliases": ["Speak up", "Candor"],
+      "competency": "Directiveness and assertiveness",
+      "competency_cluster": "Managerial",
+      "definition": "The intention to make one's wishes, viewpoint, or a difficult message known to others in an appropriately direct and firm way.",
+      "behavioral_indicators": [
+        "Raises a disagreement with someone more senior",
+        "Delivers an unwelcome update without softening it into ambiguity",
+        "Makes a decision under pressure rather than deferring it",
+        "States a boundary clearly rather than letting it be assumed"
+      ],
+      "evidence_sources": ["structured_interview", "assessment_center", "reference_check"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Curiosity",
+      "aliases": ["Learning mindset"],
+      "competency": "Information seeking",
+      "competency_cluster": "Achievement and action",
+      "definition": "An underlying desire to know more about things, people, or issues, including digging below the surface of a stated problem.",
+      "behavioral_indicators": [
+        "Asks a follow-up question that goes beneath the initial answer",
+        "Seeks out a source of information beyond the obvious one",
+        "Tests an assumption rather than accepting it",
+        "Follows up later on something left unresolved"
+      ],
+      "evidence_sources": ["structured_interview", "work_sample", "cognitive_ability_test"],
+      "source": "spencer_spencer_1993"
+    },
+    {
+      "value": "Results",
+      "aliases": ["Drive", "High performance"],
+      "competency": "Achievement orientation",
+      "competency_cluster": "Achievement and action",
+      "definition": "A concern for working well, or for competing against a standard of excellence — one's own past performance, an objective measure, or others' performance.",
+      "behavioral_indicators": [
+        "Sets a more demanding target than the one given",
+        "Tracks own performance against a clear benchmark",
+        "Changes a process specifically to hit a number, not just to look busy",
+        "Cites a measurable result rather than an activity when describing past work"
+      ],
+      "evidence_sources": ["structured_interview", "biodata", "personality_test"],
+      "source": "spencer_spencer_1993"
+    }
+  ],
+  "custom_value_guidance": {
+    "trigger": "Shown when someone enters a value that doesn't match anything in this library, so it never gets accepted as an unmeasurable label.",
+    "prompts": [
+      "What would someone clearly LOW on this value do in a meeting that would concern you?",
+      "What would someone clearly demonstrating this value do that you could point to and say 'that's it'?",
+      "If you had to write one line for an interviewer to listen for, what would it be?"
+    ]
+  }
+}

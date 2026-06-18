@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "purpose": "A broad, role-spanning taxonomy of competencies and skills that a hiring stage can assess. The stage picker in the app draws from this taxonomy (grouped by category), plus the user's own value-competencies and domain expertise, plus free text for anything missing. This file exists so the picker is no longer limited to the handful of competencies derived from the user's chosen values.",
+  "methodology_note": "Categories and skill descriptors are taken from the O*NET Content Model, the U.S. Department of Labor's public occupational taxonomy, which is explicitly published for reuse. Behavioral competencies (the Spencer & Spencer cluster) are added because O*NET's 'skills' are framed as developed capacities rather than the behavioral competencies hiring teams usually assess in interviews - the two are complementary. No proprietary framework (e.g. Korn Ferry / Lominger, SHL UCF) is reproduced here; those are licensed and cannot be copied.",
+  "sources": {
+    "onet": "O*NET Content Model, U.S. Department of Labor / Employment & Training Administration. Public domain, onetcenter.org.",
+    "spencer_spencer_1993": "Spencer, L. M., & Spencer, S. M. (1993). Competence at Work: Models for Superior Performance. Wiley."
+  },
+  "categories": [
+    {
+      "id": "content_basic",
+      "label": "Basic / content skills",
+      "source": "onet",
+      "competencies": [
+        "Reading comprehension", "Active listening", "Writing", "Speaking", "Mathematics", "Science"
+      ]
+    },
+    {
+      "id": "process",
+      "label": "Process skills",
+      "source": "onet",
+      "competencies": [
+        "Critical thinking", "Active learning", "Learning strategies", "Monitoring"
+      ]
+    },
+    {
+      "id": "social",
+      "label": "Social skills",
+      "source": "onet",
+      "competencies": [
+        "Social perceptiveness", "Coordination", "Persuasion", "Negotiation",
+        "Instructing", "Service orientation"
+      ]
+    },
+    {
+      "id": "problem_solving",
+      "label": "Complex problem-solving",
+      "source": "onet",
+      "competencies": [
+        "Complex problem solving", "Judgment and decision making", "Deductive reasoning", "Inductive reasoning"
+      ]
+    },
+    {
+      "id": "technical",
+      "label": "Technical skills",
+      "source": "onet",
+      "competencies": [
+        "Operations analysis", "Technology design", "Equipment selection", "Installation",
+        "Programming", "Operations monitoring", "Operation and control", "Equipment maintenance",
+        "Troubleshooting", "Repairing", "Quality control analysis"
+      ]
+    },
+    {
+      "id": "systems",
+      "label": "Systems skills",
+      "source": "onet",
+      "competencies": [
+        "Judgment and decision making", "Systems analysis", "Systems evaluation"
+      ]
+    },
+    {
+      "id": "resource_management",
+      "label": "Resource management skills",
+      "source": "onet",
+      "competencies": [
+        "Time management", "Management of financial resources",
+        "Management of material resources", "Management of personnel resources"
+      ]
+    },
+    {
+      "id": "behavioral",
+      "label": "Behavioral competencies (interview-assessed)",
+      "source": "spencer_spencer_1993",
+      "competencies": [
+        "Teamwork and cooperation", "Integrity and reliability", "Interpersonal understanding",
+        "Conceptual thinking", "Initiative", "Customer service orientation",
+        "Concern for order, quality and accuracy", "Flexibility", "Valuing different perspectives",
+        "Directiveness and assertiveness", "Information seeking", "Achievement orientation"
+      ]
+    }
+  ],
+  "known_limitations": [
+    "O*NET skills are 'developed capacities' rated for occupations, not interview-ready behavioral rubrics; they are offered here as assessable targets but a hiring team still needs to define what 'good' looks like for each.",
+    "This taxonomy is broad but not exhaustive. Free-text entry exists precisely so a stage can assess something this list doesn't name - especially niche domain expertise.",
+    "Proprietary frameworks such as Korn Ferry's Leadership Architect and SHL's Universal Competency Framework are deliberately not reproduced; if an organization licenses one of those, it should map its own competency names in via free text."
+  ]
+}

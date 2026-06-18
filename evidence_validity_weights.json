@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Reference table used by the scoring engine to weight each hiring-stage evaluation method by its meta-analytic predictive validity for job performance. The scoring engine reads this file directly — it contains no hardcoded weights.",
+  "methodology_note": "Validity coefficients are operational validities (correlation with job performance) drawn from two sources. Where Sackett, Zhang, Berry & Lievens (2022) published a verified, widely-corroborated correction to the original Schmidt & Hunter (1998) estimate, the 2022 figure is used. For methods that 2022 paper did not re-estimate with comparable rigor, the original Schmidt & Hunter (1998) figure is used, as tabulated in the U.S. Office of Personnel Management's Assessment Decision Guide. Every entry below cites which source its number comes from — nothing here is invented.",
+  "sources": {
+    "sackett_2022": "Sackett, P. R., Zhang, C., Berry, C. M., & Lievens, F. (2022). Revisiting meta-analytic estimates of validity in personnel selection: Addressing systematic overcorrection for restriction of range. Journal of Applied Psychology, 107(11), 2040-2068.",
+    "schmidt_hunter_1998": "Schmidt, F. L., & Hunter, J. E. (1998). The validity and utility of selection methods in personnel psychology: Practical and theoretical implications of 85 years of research findings. Psychological Bulletin, 124(2), 262-274."
+  },
+  "methods": [
+    {
+      "id": "screening_check",
+      "label": "Screening / qualification check",
+      "validity": 0.10,
+      "tier": "low",
+      "source": "schmidt_hunter_1998",
+      "note": "A CV-versus-specification or minimum-qualifications screen confirming basic eligibility (experience, salary, location, right-to-work). It is a filter, not a competency assessment, and is not expected to carry predictive validity for performance - it borrows the years-of-education figure as the closest evidenced analogue for a paper-credential check. Stages using this method are excluded from competency-coverage expectations."
+    },
+    {
+      "id": "work_sample",
+      "label": "Work sample / simulation",
+      "validity": 0.54,
+      "tier": "high",
+      "source": "schmidt_hunter_1998",
+      "note": "Original Hunter & Hunter (1984) estimate. A 2005 re-analysis (Roth, Bobko & McFarland) found .33 in service-sector roles, so treat .54 as an upper bound for hands-on or technical work samples rather than a universal figure."
+    },
+    {
+      "id": "job_knowledge_test",
+      "label": "Job knowledge test",
+      "validity": 0.48,
+      "tier": "high",
+      "source": "schmidt_hunter_1998"
+    },
+    {
+      "id": "structured_interview",
+      "label": "Structured interview",
+      "validity": 0.42,
+      "tier": "high",
+      "source": "sackett_2022",
+      "note": "Corrected downward from .51 in Schmidt & Hunter (1998), but now the single strongest predictor in this matrix once cognitive ability was also corrected down. Variability across studies is wide (80% credibility interval roughly .18 to .66), so treat this as a central estimate, not a guarantee."
+    },
+    {
+      "id": "integrity_test",
+      "label": "Integrity / honesty test",
+      "validity": 0.41,
+      "tier": "high",
+      "source": "schmidt_hunter_1998"
+    },
+    {
+      "id": "take_home_assignment",
+      "label": "Take-home assignment",
+      "validity": 0.54,
+      "tier": "high",
+      "source": "schmidt_hunter_1998",
+      "note": "Treated as a work-sample variant. No separate meta-analytic estimate exists for unproctored take-home formats specifically, so this borrows the work-sample figure as the closest evidenced analogue."
+    },
+    {
+      "id": "assessment_center",
+      "label": "Assessment center exercise",
+      "validity": 0.37,
+      "tier": "moderate",
+      "source": "schmidt_hunter_1998"
+    },
+    {
+      "id": "biodata",
+      "label": "Biographical data form",
+      "validity": 0.35,
+      "tier": "moderate",
+      "source": "schmidt_hunter_1998"
+    },
+    {
+      "id": "cognitive_ability_test",
+      "label": "Cognitive ability test",
+      "validity": 0.31,
+      "tier": "moderate",
+      "source": "sackett_2022",
+      "note": "Corrected downward from .51 in Schmidt & Hunter (1998) after addressing systematic overcorrection for range restriction. Still generalizes across virtually every job studied."
+    },
+    {
+      "id": "personality_test",
+      "label": "Personality / conscientiousness test",
+      "validity": 0.31,
+      "tier": "moderate",
+      "source": "schmidt_hunter_1998",
+      "note": "Conscientiousness is the most job-relevant Big Five facet and is used here as the representative figure; other facets (e.g. extraversion) generally validate lower and more role-dependently."
+    },
+    {
+      "id": "reference_check",
+      "label": "Reference check",
+      "validity": 0.26,
+      "tier": "moderate",
+      "source": "schmidt_hunter_1998"
+    },
+    {
+      "id": "unstructured_interview",
+      "label": "Unstructured interview",
+      "validity": 0.19,
+      "tier": "low",
+      "source": "sackett_2022",
+      "note": "Corrected downward from .38 in Schmidt & Hunter (1998) — roughly half the validity of a structured interview after correction."
+    },
+    {
+      "id": "years_experience",
+      "label": "Years of job experience",
+      "validity": 0.18,
+      "tier": "low",
+      "source": "schmidt_hunter_1998"
+    },
+    {
+      "id": "years_education",
+      "label": "Years of education",
+      "validity": 0.10,
+      "tier": "low",
+      "source": "schmidt_hunter_1998"
+    }
+  ],
+  "known_limitations": [
+    "Physical or psychomotor ability tests are not yet included. A specific, well-corroborated validity figure for this method could not be confirmed across independent sources in the time available, so it was left out rather than guessed at - it should be added once a verified figure is found, since it matters for honest coverage of physically demanding and safety-sensitive roles.",
+    "This table mixes a 1998 meta-analysis with a 2022 correction; not every method has received an equally rigorous modern re-estimate.",
+    "Operational validity is a population-level average. Any single, well-run instance of a 'low-validity' method can still outperform a poorly-run instance of a 'high-validity' one — this table informs design choices, not individual judgments.",
+    "These figures predict overall job performance; they were not derived specifically against retention, time-to-productivity, or DEI outcomes, which a complete hiring system should also weigh."
+  ]
+}

@@ -252,6 +252,34 @@ STAGE_PURPOSES = {
 }
 
 
+def decision_confidence(scores, density, stages, decision_process):
+    """A single executive-facing figure: how much confidence the EVIDENCE in
+    this process can support. Blends evidence validity, evidence density,
+    calibration, and scorecard coverage. This is a composite of existing
+    signals, not an independent measurement - it re-expresses them as a
+    decision-confidence lens."""
+    validity_component = scores.get("evidence_validity", 0)
+    density_val = density.get("density", 0) if density else 0
+    density_component = min(100, (density_val / 2.0) * 100)  # 2.0 sources/target = full marks
+    calibration_component = 100 if decision_process.get("calibration") else 40
+    scored = [s for s in stages if s.get("method_id") != "screening_check"]
+    scorecard_component = round(100 * sum(1 for s in scored if s.get("has_scorecard")) / len(scored)) if scored else 0
+    confidence = round(
+        0.40 * validity_component
+        + 0.25 * density_component
+        + 0.20 * calibration_component
+        + 0.15 * scorecard_component
+    )
+    return {
+        "confidence": confidence,
+        "explanation": (
+            f"Blends evidence validity ({validity_component}), evidence density "
+            f"({round(density_component)}), calibration ({calibration_component}), and scorecard "
+            f"coverage ({scorecard_component}). Weighted 40/25/20/15."
+        ),
+    }
+
+
 def evidence_density(values, stages, library_by_value, technical_requirements=None):
     """Average number of valid evidence sources collected per assessed target.
     Unlike a simple covered/identified ratio, this captures DEPTH: a competency
@@ -326,9 +354,21 @@ def detect_purpose_overlap(stages):
 
 def build_coverage_matrix(values, stages, library_by_value, technical_requirements=None):
     """Returns a matrix of which assessed targets (value-competencies + domain)
-    are covered by which stages, plus duplication findings where a single
-    competency is assessed across many stages."""
+    are covered by which stages, plus duplication findings. Duplication is only
+    flagged when the same competency is assessed 2+ times by the SAME method
+    family - assessing it via different methods (interview + reference + work
+    sample) is legitimate triangulation, not redundancy."""
     technical_requirements = technical_requirements or []
+    # Group methods into families so e.g. structured + unstructured interview count as one family.
+    method_family = {
+        "screening_check": "screening",
+        "structured_interview": "interview", "unstructured_interview": "interview",
+        "work_sample": "work_sample", "take_home_assignment": "work_sample",
+        "assessment_center": "work_sample",
+        "job_knowledge_test": "test", "cognitive_ability_test": "test",
+        "personality_test": "test", "integrity_test": "test", "biodata": "test",
+        "reference_check": "reference",
+    }
     targets = []
     for v in values:
         entry = library_by_value.get(v.lower())
@@ -340,7 +380,7 @@ def build_coverage_matrix(values, stages, library_by_value, technical_requiremen
     matrix, duplication = [], []
     for tgt in targets:
         row = {"target": tgt["label"], "kind": tgt["kind"], "cells": []}
-        assessed_in = []
+        assessed_in, families = [], {}
         for s in stages:
             pool = ([c.lower() for c in s.get("competencies_assessed", [])]
                     if tgt["kind"] == "value"
@@ -349,10 +389,15 @@ def build_coverage_matrix(values, stages, library_by_value, technical_requiremen
             row["cells"].append(hit)
             if hit:
                 assessed_in.append(s["name"] or "a stage")
+                fam = method_family.get(s.get("method_id"), "other")
+                families.setdefault(fam, []).append(s["name"] or "a stage")
         row["count"] = len(assessed_in)
         matrix.append(row)
-        if len(assessed_in) >= 3:
-            duplication.append({"target": tgt["label"], "count": len(assessed_in), "stages": assessed_in})
+        # Redundancy = 2+ stages of the SAME family assessing the same target.
+        for fam, names in families.items():
+            if len(names) >= 2:
+                duplication.append({"target": tgt["label"], "count": len(names),
+                                    "stages": names, "family": fam})
 
     return {"stage_names": stage_names, "matrix": matrix, "duplication": duplication}
 
@@ -420,6 +465,7 @@ def run_audit(role, values, stages, decision_process, role_tier="professional",
     coverage_analysis = build_coverage_matrix(values, stages, library_by_value, technical_requirements)
     purpose_overlap = detect_purpose_overlap(stages)
     density = evidence_density(values, stages, library_by_value, technical_requirements)
+    confidence = decision_confidence(scores, density, stages, decision_process)
 
     return {
         "role": role,
@@ -434,6 +480,7 @@ def run_audit(role, values, stages, decision_process, role_tier="professional",
         "coverage_analysis": coverage_analysis,
         "purpose_overlap": purpose_overlap,
         "evidence_density": density,
+        "decision_confidence": confidence,
         "values_audited": values,
         "technical_requirements_audited": technical_requirements,
         "stages_audited": stages,

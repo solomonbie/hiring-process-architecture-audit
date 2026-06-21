@@ -341,6 +341,8 @@ td{{padding:4px 0;border-bottom:0.5px solid #eee;}} .big{{font-size:48px;font-we
 <table>{rows}</table>
 <h2>Evidence density</h2>
 <p><strong>{result['evidence_density']['density']}</strong> ({result['evidence_density']['band']}) — {result['evidence_density']['explanation']}</p>
+<h2>Decision confidence</h2>
+<p><strong>{result['decision_confidence']['confidence']}%</strong> — {result['decision_confidence']['explanation']}</p>
 <h2>Highest-leverage fix</h2>
 <p class="fix">{result['recommendation']}</p>
 <h2>Competency coverage map</h2>
@@ -376,6 +378,20 @@ if "last_result" in st.session_state:
         """,
         unsafe_allow_html=True,
     )
+
+    dc = result.get("decision_confidence")
+    if dc:
+        dc_color = score_color(dc["confidence"])
+        st.markdown(
+            f"""
+            <div style="text-align:center;padding:0 0 1.25rem;">
+              <span style="font-size:13px;color:gray;">Decision confidence</span><br>
+              <span style="font-size:30px;font-weight:600;color:{dc_color};">{dc['confidence']}%</span>
+              <div style="font-size:12px;color:#777;max-width:460px;margin:4px auto 0;">{dc['explanation']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # Radar chart of the five dimensions
     try:
@@ -431,9 +447,9 @@ if "last_result" in st.session_state:
         st.subheader("Possible redundancy")
         for d in duplication:
             st.info(
-                f"**{d['target']}** is assessed in {d['count']} stages "
-                f"({', '.join(d['stages'])}). Consider consolidating evidence collection — "
-                "assessing the same thing repeatedly adds candidate burden without adding much new signal."
+                f"**{d['target']}** is assessed by {d['count']} stages using the same method type "
+                f"({', '.join(d['stages'])}). Repeating the same kind of assessment adds candidate burden "
+                "without adding much new signal — assessing it via a different method would be stronger triangulation."
             )
         for o in purpose_overlap:
             st.info(

@@ -242,6 +242,152 @@ EVIDENTIARY_BASIS = {
 }
 
 
+STAGE_PURPOSES = {
+    "eligibility": "Eligibility / screening",
+    "behavioural": "Behavioural assessment",
+    "technical": "Technical / domain assessment",
+    "leadership": "Leadership assessment",
+    "values": "Values assessment",
+    "calibration": "Decision calibration",
+}
+
+
+def evidence_density(values, stages, library_by_value, technical_requirements=None):
+    """Average number of valid evidence sources collected per assessed target.
+    Unlike a simple covered/identified ratio, this captures DEPTH: a competency
+    seen once rests on thinner evidence than one seen through two independent,
+    valid methods. Screening stages don't count as evidence sources. A method
+    counts toward density only if it carries real assessment validity."""
+    technical_requirements = technical_requirements or []
+    targets = []
+    for v in values:
+        entry = library_by_value.get(v.lower())
+        targets.append({"match": (entry["competency"] if entry else v), "kind": "value"})
+    for t in technical_requirements:
+        targets.append({"match": t, "kind": "domain"})
+    if not targets:
+        return {"density": 0.0, "band": "n/a", "assessed_targets": 0, "total_sources": 0,
+                "explanation": "No values or domain requirements were entered."}
+
+    total_sources = 0
+    assessed_targets = 0
+    for tgt in targets:
+        sources = 0
+        for s in stages:
+            if s.get("method_id") == "screening_check":
+                continue
+            pool = ([c.lower() for c in s.get("competencies_assessed", [])]
+                    if tgt["kind"] == "value"
+                    else [c.lower() for c in s.get("technical_assessed", [])])
+            if tgt["match"].lower() in pool:
+                sources += 1
+        if sources > 0:
+            assessed_targets += 1
+        total_sources += sources
+
+    density = round(total_sources / assessed_targets, 2) if assessed_targets else 0.0
+    if assessed_targets == 0:
+        band = "weak"
+    elif density < 1.0:
+        band = "weak"
+    elif density <= 1.5:
+        band = "moderate"
+    else:
+        band = "strong"
+    explanation = (
+        f"{assessed_targets} of {len(targets)} target(s) are assessed at all, "
+        f"across {total_sources} evidence source(s) in total — an average of {density} "
+        f"valid source(s) per assessed target. Benchmark: under 1.0 weak, 1.0-1.5 moderate, above 1.5 strong."
+    )
+    return {"density": density, "band": band, "assessed_targets": assessed_targets,
+            "total_sources": total_sources, "explanation": explanation}
+
+
+def detect_purpose_overlap(stages):
+    """Flags when multiple stages share the same primary purpose. Some overlap
+    is legitimate (two behavioural interviews probing different competencies),
+    but repeated identical-purpose stages are the most common source of bloated
+    loops, so they are surfaced for the user to judge."""
+    from collections import defaultdict
+    by_purpose = defaultdict(list)
+    for s in stages:
+        for p in s.get("purposes", []):
+            by_purpose[p].append(s["name"] or "a stage")
+    findings = []
+    for purpose, names in by_purpose.items():
+        if len(names) >= 2:
+            findings.append({
+                "purpose": STAGE_PURPOSES.get(purpose, purpose),
+                "count": len(names),
+                "stages": names,
+            })
+    return findings
+
+
+def build_coverage_matrix(values, stages, library_by_value, technical_requirements=None):
+    """Returns a matrix of which assessed targets (value-competencies + domain)
+    are covered by which stages, plus duplication findings where a single
+    competency is assessed across many stages."""
+    technical_requirements = technical_requirements or []
+    targets = []
+    for v in values:
+        entry = library_by_value.get(v.lower())
+        targets.append({"label": v, "match": (entry["competency"] if entry else v), "kind": "value"})
+    for t in technical_requirements:
+        targets.append({"label": t, "match": t, "kind": "domain"})
+
+    stage_names = [s["name"] or f"Stage {i+1}" for i, s in enumerate(stages)]
+    matrix, duplication = [], []
+    for tgt in targets:
+        row = {"target": tgt["label"], "kind": tgt["kind"], "cells": []}
+        assessed_in = []
+        for s in stages:
+            pool = ([c.lower() for c in s.get("competencies_assessed", [])]
+                    if tgt["kind"] == "value"
+                    else [c.lower() for c in s.get("technical_assessed", [])])
+            hit = tgt["match"].lower() in pool
+            row["cells"].append(hit)
+            if hit:
+                assessed_in.append(s["name"] or "a stage")
+        row["count"] = len(assessed_in)
+        matrix.append(row)
+        if len(assessed_in) >= 3:
+            duplication.append({"target": tgt["label"], "count": len(assessed_in), "stages": assessed_in})
+
+    return {"stage_names": stage_names, "matrix": matrix, "duplication": duplication}
+
+
+def benchmark_zone(composite):
+    """A plain-language band for the composite score."""
+    if composite >= 90:
+        return {"label": "World class", "range": "90-100", "tone": "success"}
+    if composite >= 75:
+        return {"label": "Strong", "range": "75-89", "tone": "success"}
+    if composite >= 60:
+        return {"label": "Moderate risk", "range": "60-74", "tone": "warning"}
+    return {"label": "Redesign recommended", "range": "below 60", "tone": "danger"}
+
+
+def maturity_level(composite):
+    """A five-level maturity model, mapped from the composite score. This is a
+    presentation layer for executive audiences, not a separate measurement -
+    it re-expresses the same composite on a named ladder."""
+    if composite >= 90:
+        return {"level": 5, "label": "Talent-science optimised",
+                "blurb": "Evidence-led throughout, with calibration and structured combination of evidence."}
+    if composite >= 75:
+        return {"level": 4, "label": "Evidence-led",
+                "blurb": "Most decisions rest on structured evidence rather than impression."}
+    if composite >= 60:
+        return {"level": 3, "label": "Structured",
+                "blurb": "Structure is in place but evidence collection or decision combination has gaps."}
+    if composite >= 40:
+        return {"level": 2, "label": "Emerging",
+                "blurb": "Some structure exists, but much of the process still leans on judgment."}
+    return {"level": 1, "label": "Reactive",
+            "blurb": "The process has grown by accretion and rests largely on intuition."}
+
+
 def run_audit(role, values, stages, decision_process, role_tier="professional",
               technical_requirements=None, kb_dir=KB_DIR):
     weights_by_id, library_by_value = load_knowledge_base(kb_dir)
@@ -271,15 +417,23 @@ def run_audit(role, values, stages, decision_process, role_tier="professional",
     }
 
     recommendation = recommend_highest_leverage_fix(scores, stages, values, library_by_value, weights_by_id)
+    coverage_analysis = build_coverage_matrix(values, stages, library_by_value, technical_requirements)
+    purpose_overlap = detect_purpose_overlap(stages)
+    density = evidence_density(values, stages, library_by_value, technical_requirements)
 
     return {
         "role": role,
         "role_tier": role_tier,
         "composite_score": composite,
+        "benchmark_zone": benchmark_zone(composite),
+        "maturity": maturity_level(composite),
         "scores": scores,
         "explanations": explanations,
         "evidentiary_basis": EVIDENTIARY_BASIS,
         "recommendation": recommendation,
+        "coverage_analysis": coverage_analysis,
+        "purpose_overlap": purpose_overlap,
+        "evidence_density": density,
         "values_audited": values,
         "technical_requirements_audited": technical_requirements,
         "stages_audited": stages,

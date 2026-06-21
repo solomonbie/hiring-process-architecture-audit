@@ -13,7 +13,7 @@ import os
 
 import streamlit as st
 
-from scoring_engine import ROLE_TIERS, run_audit
+from scoring_engine import ROLE_TIERS, STAGE_PURPOSES, run_audit
 
 KB_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -131,7 +131,7 @@ if selected_values:
 if st.button("+ Add a stage"):
     st.session_state.stages.append(
         {"name": "", "method_id": "structured_interview", "competencies_assessed": [],
-         "technical_assessed": [], "has_scorecard": False, "interviewer_count": 1, "duration_minutes": 30}
+         "technical_assessed": [], "purposes": [], "has_scorecard": False, "interviewer_count": 1, "duration_minutes": 30}
     )
 
 competency_choices = sorted({VALUE_TO_COMPETENCY.get(v, v) for v in selected_values}) if selected_values else []
@@ -161,6 +161,15 @@ for i, stage in enumerate(st.session_state.stages):
         stage["method_id"] = st.selectbox(
             "Evaluation method", options=method_keys, format_func=lambda k: METHOD_OPTIONS[k],
             index=method_keys.index(stage["method_id"]), key=f"method_{i}",
+        )
+
+        purpose_keys = list(STAGE_PURPOSES.keys())
+        stage["purposes"] = st.multiselect(
+            "What is the purpose of this stage?",
+            options=purpose_keys, format_func=lambda k: STAGE_PURPOSES[k],
+            default=[p for p in stage.get("purposes", []) if p in purpose_keys],
+            key=f"purpose_{i}",
+            help="What this stage exists to do. Two stages with the same purpose may be redundant.",
         )
 
         if stage["method_id"] == "screening_check":
@@ -327,8 +336,11 @@ td{{padding:4px 0;border-bottom:0.5px solid #eee;}} .big{{font-size:48px;font-we
 <h1>Hiring process architecture audit</h1>
 <p style="color:#555;">Role: <strong>{result['role']}</strong> &middot; Tier: {ROLE_TIERS[result['role_tier']]['label']}</p>
 <p class="big">{result['composite_score']}<span style="font-size:18px;color:#888;"> / 100 composite</span></p>
+<p style="margin-top:-8px;"><strong>{result['benchmark_zone']['label']}</strong> ({result['benchmark_zone']['range']}) &middot; Architecture maturity: <strong>Level {result['maturity']['level']} of 5 — {result['maturity']['label']}</strong><br><span style="color:#666;font-size:13px;">{result['maturity']['blurb']}</span></p>
 <h2>Score breakdown</h2>
 <table>{rows}</table>
+<h2>Evidence density</h2>
+<p><strong>{result['evidence_density']['density']}</strong> ({result['evidence_density']['band']}) — {result['evidence_density']['explanation']}</p>
 <h2>Highest-leverage fix</h2>
 <p class="fix">{result['recommendation']}</p>
 <h2>Competency coverage map</h2>
@@ -343,15 +355,47 @@ if "last_result" in st.session_state:
     st.header(f"Results: {result['role']}")
 
     comp = result["composite_score"]
+    zone = result["benchmark_zone"]
+    mat = result["maturity"]
+    zone_color = {"success": "#1D9E75", "warning": "#BA7517", "danger": "#E24B4A"}[zone["tone"]]
     st.markdown(
         f"""
-        <div style="text-align:center;padding:1rem 0 1.5rem;">
+        <div style="text-align:center;padding:1rem 0 0.5rem;">
           <div style="font-size:52px;font-weight:600;color:{score_color(comp)};line-height:1;">{comp}</div>
           <div style="font-size:14px;color:gray;">composite score / 100</div>
+          <div style="display:inline-block;margin-top:12px;padding:4px 14px;border-radius:999px;
+               background:{zone_color}22;color:{zone_color};font-weight:500;font-size:14px;">
+            {zone['label']} &middot; {zone['range']}
+          </div>
+        </div>
+        <div style="text-align:center;padding:0.25rem 0 1.5rem;color:#444;">
+          <span style="font-size:13px;color:gray;">Architecture maturity</span><br>
+          <span style="font-size:18px;font-weight:600;">Level {mat['level']} of 5 — {mat['label']}</span><br>
+          <span style="font-size:13px;color:#666;">{mat['blurb']}</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    # Radar chart of the five dimensions
+    try:
+        import plotly.graph_objects as go
+        radar_labels = [SCORE_LABELS[k] for k in SCORE_LABELS]
+        radar_values = [result["scores"][k] for k in SCORE_LABELS]
+        fig = go.Figure(go.Scatterpolar(
+            r=radar_values + [radar_values[0]],
+            theta=radar_labels + [radar_labels[0]],
+            fill="toself",
+            line=dict(color="#1D9E75"),
+            fillcolor="rgba(29,158,117,0.25)",
+        ))
+        fig.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+            showlegend=False, height=380, margin=dict(l=60, r=60, t=30, b=30),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        pass
 
     for key in SCORE_LABELS:
         render_score_bar(
@@ -361,6 +405,58 @@ if "last_result" in st.session_state:
 
     st.subheader("Highest-leverage fix")
     st.warning(result["recommendation"])
+
+    # Evidence density
+    ed = result.get("evidence_density")
+    if ed and ed.get("assessed_targets", 0) > 0:
+        band_color = {"weak": "#E24B4A", "moderate": "#BA7517", "strong": "#1D9E75"}.get(ed["band"], "#888")
+        st.markdown(
+            f"""
+            <div style="border:0.5px solid #ddd;border-radius:10px;padding:14px 16px;margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                <span style="font-weight:500;font-size:15px;">Evidence density</span>
+                <span style="font-weight:600;font-size:18px;color:{band_color};">{ed['density']} <span style="font-size:13px;text-transform:capitalize;">({ed['band']})</span></span>
+              </div>
+              <div style="font-size:12.5px;color:#666;margin-top:6px;">{ed['explanation']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # Duplication findings
+    analysis = result.get("coverage_analysis", {})
+    duplication = analysis.get("duplication", [])
+    purpose_overlap = result.get("purpose_overlap", [])
+    if duplication or purpose_overlap:
+        st.subheader("Possible redundancy")
+        for d in duplication:
+            st.info(
+                f"**{d['target']}** is assessed in {d['count']} stages "
+                f"({', '.join(d['stages'])}). Consider consolidating evidence collection — "
+                "assessing the same thing repeatedly adds candidate burden without adding much new signal."
+            )
+        for o in purpose_overlap:
+            st.info(
+                f"**{o['count']} stages share the purpose '{o['purpose']}'** "
+                f"({', '.join(o['stages'])}). Overlapping stage purposes are the most common cause of "
+                "bloated loops — check whether these could be merged or differentiated."
+            )
+
+    # Coverage heatmap
+    matrix = analysis.get("matrix", [])
+    stage_names = analysis.get("stage_names", [])
+    if matrix and stage_names:
+        st.subheader("Competency coverage heatmap")
+        st.caption("Where each target is assessed across your stages. Gaps and over-coverage both show at a glance.")
+        header = "| Target | " + " | ".join(stage_names) + " | Count |\n"
+        header += "|---|" + "|".join([":---:"] * len(stage_names)) + "|:---:|\n"
+        body = ""
+        for row in matrix:
+            cells = " | ".join("✅" if c else "·" for c in row["cells"])
+            flag = " ⚠️" if row["count"] == 0 else (" 🔁" if row["count"] >= 3 else "")
+            body += f"| {row['target']}{flag} | {cells} | {row['count']} |\n"
+        st.markdown(header + body)
+        st.caption("⚠️ = not assessed anywhere · 🔁 = possible duplication (3+ stages)")
 
     st.subheader("Competency coverage map")
     st.caption("Each value you're hiring for, the competency it translates to, and whether any stage assesses it.")

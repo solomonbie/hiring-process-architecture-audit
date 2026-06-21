@@ -13,7 +13,9 @@ import os
 
 import streamlit as st
 
-from scoring_engine import ROLE_TIERS, STAGE_PURPOSES, run_audit
+from scoring_engine import ROLE_TIERS, STAGE_PURPOSES, generate_architecture, run_audit
+from scoring_engine import load_knowledge_base
+import onet_client
 
 KB_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -242,7 +244,19 @@ candidates_prepared = st.checkbox("Candidates are deliberately prepared (sent ma
 
 # ---------- Run ----------
 st.divider()
-if st.button("Run the audit", type="primary"):
+col_audit, col_gen = st.columns(2)
+with col_audit:
+    run_clicked = st.button("Run the audit", type="primary", use_container_width=True)
+with col_gen:
+    gen_clicked = st.button("Generate recommended architecture", use_container_width=True)
+
+onet_key = st.text_input(
+    "Optional: O*NET API key to enrich the generator with U.S. Dept of Labor role data",
+    type="password",
+    help="Free key from services.onetcenter.org/developer/signup. Leave blank to generate from the built-in knowledge base only.",
+)
+
+if run_clicked:
     if not st.session_state.stages:
         st.error("Add at least one stage before running the audit.")
     elif not selected_values and not technical_requirements:
@@ -259,6 +273,27 @@ if st.button("Run the audit", type="primary"):
             },
             role_tier=role_tier,
             technical_requirements=technical_requirements,
+        )
+
+if gen_clicked:
+    if not selected_values and not technical_requirements:
+        st.error("Add at least one value or domain requirement before generating an architecture.")
+    else:
+        _, lib_for_gen = load_knowledge_base(KB_DIR)
+        weights_for_gen = {m["id"]: m for m in weights_json["methods"]}
+        onet_skills = []
+        if onet_key and role_name:
+            with st.spinner("Fetching role data from O*NET…"):
+                enriched = onet_client.enrich_role(role_name, onet_key)
+                onet_skills = enriched.get("skills", [])
+        st.session_state.generated_arch = generate_architecture(
+            role=role_name or "Unnamed role",
+            values=selected_values,
+            technical_requirements=technical_requirements,
+            role_tier=role_tier,
+            library_by_value=lib_for_gen,
+            weights_by_id=weights_for_gen,
+            onet_skills=onet_skills,
         )
 
 def score_color(score):
@@ -510,3 +545,22 @@ if "last_result" in st.session_state:
         mime="text/html",
     )
     st.caption("Open the downloaded file in any browser, then use Print → Save as PDF for a PDF copy.")
+
+
+# ---------- Generated architecture (distinct section) ----------
+if "generated_arch" in st.session_state:
+    arch = st.session_state.generated_arch
+    st.divider()
+    st.header(f"Recommended starting architecture: {arch['role']}")
+    for note in arch["notes"]:
+        st.caption(note)
+
+    rows = "| Stage | Purpose | Method | Assesses |\n|---|---|---|---|\n"
+    for s in arch["stages"]:
+        rows += f"| {s['name']} | {s['purpose']} | {s['method']} | {s['assesses']} |\n"
+    st.markdown(rows)
+
+    if arch.get("onet_note"):
+        st.info(arch["onet_note"])
+    elif arch.get("onet_skills") == [] and "generated_arch" in st.session_state:
+        st.caption("Generated from the built-in knowledge base. Add an O*NET API key and a role title to enrich with U.S. Department of Labor role data.")

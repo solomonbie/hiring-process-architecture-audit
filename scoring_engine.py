@@ -402,6 +402,88 @@ def build_coverage_matrix(values, stages, library_by_value, technical_requiremen
     return {"stage_names": stage_names, "matrix": matrix, "duplication": duplication}
 
 
+def generate_architecture(role, values, technical_requirements, role_tier,
+                          library_by_value, weights_by_id, onet_skills=None):
+    """Assemble a STARTING hiring architecture. This is a constraint-satisfier,
+    not an oracle: it routes each stated requirement to a stage whose method has
+    adequate validity to assess it, using only the rules already in the
+    knowledge base. It does NOT claim to be the optimal process - it guarantees
+    every stated requirement is assessed by an adequately-valid method, which is
+    a defensible floor, not a prescription.
+
+    onet_skills (optional): a list of {'name','importance'} from O*NET. When
+    present, it's surfaced as supporting evidence for which competencies matter
+    for this role - it informs, it does not override the user's stated values.
+    """
+    technical_requirements = technical_requirements or []
+    stages = []
+
+    # 1. Always start with an eligibility screen.
+    stages.append({
+        "name": "Recruiter screen", "method": "Screening / qualification check",
+        "purpose": "Eligibility", "assesses": "CV vs spec, salary, location, motivation",
+    })
+
+    # 2. Domain expertise -> a work-sample-family stage (highest validity for skill).
+    if technical_requirements:
+        stages.append({
+            "name": "Work sample / technical exercise",
+            "method": "Work sample / simulation",
+            "purpose": "Technical / domain assessment",
+            "assesses": ", ".join(technical_requirements),
+        })
+
+    # 3. Values -> a structured behavioural interview (strongest validated method
+    #    for behavioural competencies).
+    value_competencies = []
+    for v in values:
+        entry = library_by_value.get(v.lower())
+        value_competencies.append(entry["competency"] if entry else v)
+    if value_competencies:
+        stages.append({
+            "name": "Structured behavioural interview",
+            "method": "Structured interview",
+            "purpose": "Behavioural / values assessment",
+            "assesses": ", ".join(value_competencies),
+        })
+
+    # 4. Leadership tiers get a dedicated leadership stage.
+    if role_tier in ("senior_specialist", "executive"):
+        stages.append({
+            "name": "Leadership / stakeholder interview",
+            "method": "Structured interview",
+            "purpose": "Leadership assessment",
+            "assesses": "Stakeholder management, decision-making under pressure",
+        })
+
+    # 5. A final calibrated decision step.
+    stages.append({
+        "name": "Calibrated decision / debrief",
+        "method": "Structured rubric combination",
+        "purpose": "Decision calibration",
+        "assesses": "Combine evidence across stages against a shared rubric",
+    })
+
+    notes = [
+        "This is a defensible STARTING point, not an optimal or prescribed process. It guarantees every "
+        "stated requirement is assessed by a method with adequate predictive validity - adapt it to your context.",
+        "Each stage's method was chosen for validity: work samples and structured interviews are the "
+        "strongest validated methods (Schmidt & Hunter, 1998; Sackett et al., 2022).",
+    ]
+    onet_note = None
+    if onet_skills:
+        top = ", ".join(f"{s['name']}" for s in onet_skills[:5] if s.get("name"))
+        if top:
+            onet_note = (
+                f"O*NET (U.S. Department of Labor) rates these as among the most important skills for the "
+                f"closest matching occupation: {top}. Use this to sense-check whether your stated values and "
+                "domain requirements capture what the role actually demands."
+            )
+
+    return {"role": role, "stages": stages, "notes": notes, "onet_note": onet_note,
+            "onet_skills": onet_skills or []}
+
+
 def benchmark_zone(composite):
     """A plain-language band for the composite score."""
     if composite >= 90:

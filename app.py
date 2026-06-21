@@ -244,17 +244,7 @@ candidates_prepared = st.checkbox("Candidates are deliberately prepared (sent ma
 
 # ---------- Run ----------
 st.divider()
-col_audit, col_gen = st.columns(2)
-with col_audit:
-    run_clicked = st.button("Run the audit", type="primary", use_container_width=True)
-with col_gen:
-    gen_clicked = st.button("Generate recommended architecture", use_container_width=True)
-
-onet_key = st.text_input(
-    "Optional: O*NET API key to enrich the generator with U.S. Dept of Labor role data",
-    type="password",
-    help="Free key from services.onetcenter.org/developer/signup. Leave blank to generate from the built-in knowledge base only.",
-)
+run_clicked = st.button("Run the audit", type="primary", use_container_width=True)
 
 if run_clicked:
     if not st.session_state.stages:
@@ -275,7 +265,29 @@ if run_clicked:
             technical_requirements=technical_requirements,
         )
 
-if gen_clicked:
+# The generator only becomes available once a process has been audited. Clicking
+# "Generate" reveals a panel asking for the optional O*NET key with a privacy
+# note; a second "Generate now" button actually runs it.
+if "last_result" in st.session_state:
+    st.markdown("##### Next step")
+    st.caption("Now that your process is audited, generate a research-grounded starting architecture to compare against.")
+    if st.button("Generate recommended architecture", use_container_width=True):
+        st.session_state.show_gen_panel = True
+
+onet_key = ""
+gen_now = False
+if st.session_state.get("show_gen_panel"):
+    with st.container(border=True):
+        st.markdown("**Optional: enrich with U.S. Department of Labor (O*NET) role data**")
+        st.caption(
+            "Paste a free O*NET API key to pull the skills O*NET rates as most important for this role. "
+            "Your key is used only for this one generation and is never stored or saved. "
+            "Leave it blank to generate from the built-in knowledge base instead."
+        )
+        onet_key = st.text_input("O*NET API key (optional)", type="password", key="onet_key_input")
+        gen_now = st.button("Generate now", type="primary", use_container_width=True)
+
+if gen_now:
     if not selected_values and not technical_requirements:
         st.error("Add at least one value or domain requirement before generating an architecture.")
     else:
